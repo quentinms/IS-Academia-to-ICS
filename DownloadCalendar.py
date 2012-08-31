@@ -56,81 +56,88 @@ def parseXML():
 	#Get the lectures
 	events = dom.getElementsByTagName('seance')
 	
-	content=""
-	#Extract info for each lecture
-	for event in events:
-		
-		#Event ID
-		#Important: EID are not unique. >.<
-		eId = event.toxml()
-		eId = re.sub("<seance id=\"","",eId)
-		eId = re.sub("\">.*</seance>","",eId, 0 ,re.DOTALL)
-		
-		libelle = event.getElementsByTagName('libelle')[0]
-		libs = libelle.getElementsByTagName('lib')
-		
-		#Course Name
-		courseName = libs[0].toxml()
-		courseName = re.sub("<lib>","",courseName)
-		courseName = re.sub("</lib>","",courseName)
-		
-		#Room
-		room = libs[1].toxml()
-		room = re.sub("\[/URL\]</lib>","",room)
-		room = re.sub("<lib>\[.*\]","",room)
+	if (events.length != 0):
+		content=""
+		#Extract info for each lecture
+		for event in events:
 			
-		#Date and Time
-		#<d_seance>17-OCT-12</d_seance>
-		#<n_heuredebut>16</n_heuredebut>
-		#<n_heurefin>17</n_heurefin>
+			#Event ID
+			#Important: EID are not unique. >.<
+			eId = event.toxml()
+			eId = re.sub("<seance id=\"","",eId)
+			eId = re.sub("\">.*</seance>","",eId, 0 ,re.DOTALL)
+			
+			libelle = event.getElementsByTagName('libelle')[0]
+			libs = libelle.getElementsByTagName('lib')
+			
+			#Course Name
+			courseName = libs[0].toxml()
+			courseName = re.sub("<lib>","",courseName)
+			courseName = re.sub("</lib>","",courseName)
+			
+			#Room
+			room = libs[1].toxml()
+			room = re.sub("\[/URL\]</lib>","",room)
+			room = re.sub("<lib>\[.*\]","",room)
+				
+			#Date and Time
+			#<d_seance>17-OCT-12</d_seance>
+			#<n_heuredebut>16</n_heuredebut>
+			#<n_heurefin>17</n_heurefin>
+			
+			day = event.getElementsByTagName('d_seance')[0].toxml()
+			day = re.sub("<d_seance>","",day)
+			day = re.sub("</d_seance>","",day)
+			
+			startH = event.getElementsByTagName('n_heuredebut')[0].toxml()
+			startH = re.sub("</n_heuredebut>","",startH)
+			startH = re.sub("<n_heuredebut>","",startH)
+			
+			endH = event.getElementsByTagName('n_heurefin')[0].toxml()
+			endH = re.sub("</n_heurefin>","",endH)
+			endH = re.sub("<n_heurefin>","",endH)
+			
+			#Event Type
+			#<type>LIP_PROJET</type>
+			eType = event.getElementsByTagName('type')[0].toxml()
+			eType = re.sub("<type>LIP_","",eType)
+			eType = re.sub("</type>","",eType)
 		
-		day = event.getElementsByTagName('d_seance')[0].toxml()
-		day = re.sub("<d_seance>","",day)
-		day = re.sub("</d_seance>","",day)
+			#Teacher
+			#<infobulle><lib>Madoeuf Stéphane</lib></infobulle>
+			
+			teacher = event.getElementsByTagName('infobulle')[0].getElementsByTagName('lib')[0].toxml()
+			teacher = re.sub("<lib>","",teacher)
+			teacher = re.sub("</lib>","",teacher)
+			
+			#print "Debug: "+eId+" | "+courseName+" | "+room+" | "+day+" | "+startH+"-"+endH+" | "+eType+" | "+teacher
+			content+=createICS(eId,courseName,room,day,startH,endH,eType,teacher)+"\n"
 		
-		startH = event.getElementsByTagName('n_heuredebut')[0].toxml()
-		startH = re.sub("</n_heuredebut>","",startH)
-		startH = re.sub("<n_heuredebut>","",startH)
-		
-		endH = event.getElementsByTagName('n_heurefin')[0].toxml()
-		endH = re.sub("</n_heurefin>","",endH)
-		endH = re.sub("<n_heurefin>","",endH)
-		
-		#Event Type
-		#<type>LIP_PROJET</type>
-		eType = event.getElementsByTagName('type')[0].toxml()
-		eType = re.sub("<type>LIP_","",eType)
-		eType = re.sub("</type>","",eType)
-	
-		#Teacher
-		#<infobulle><lib>Madoeuf Stéphane</lib></infobulle>
-		
-		teacher = event.getElementsByTagName('infobulle')[0].getElementsByTagName('lib')[0].toxml()
-		teacher = re.sub("<lib>","",teacher)
-		teacher = re.sub("</lib>","",teacher)
-		
-		#print "Debug: "+eId+" | "+courseName+" | "+room+" | "+day+" | "+startH+"-"+endH+" | "+eType+" | "+teacher
-		content+=createICS(eId,courseName,room,day,startH,endH,eType,teacher)+"\n"
-	
-	header = """BEGIN:VCALENDAR
+		header = """BEGIN:VCALENDAR
 PRODID:QMS-ISACADEMIA-TO-ICS
 VERSION:2.0
 METHOD:PUBLISH
-		"""	
+			"""	
+			
+		footer = """END:VCALENDAR"""
 		
-	footer = """END:VCALENDAR"""
-	
-	ics = header+content+footer
-	
-	#Save file
-	f = open('epfl.ics', 'w')
-	f.write(ics.encode("utf-8"))
-	f.close()
-
+		ics = header+content+footer
+		
+		#Save file
+		f = open('epfl.ics', 'w')
+		f.write(ics.encode("utf-8"))
+		f.close()
+	else :
+		print "No events! Please choose an other period."
 		
 def createICS(eId,courseName,room,day,startH,endH,eType,teacher):
 	
 	formattedDate = formatDate(day)
+	if(len(startH) < 2):
+		startH = "0"+startH
+	if(len(endH) < 2):
+		endH = "0"+endH
+
 	start = formattedDate+"T"+startH+"0000"
 	end = formattedDate+"T"+endH+"0000"
 		
@@ -178,7 +185,7 @@ def inputDateFormat(string):
 parser = argparse.ArgumentParser(description='Downloads calendar data from IS-Academia and export it in a .ics file')
 parser.add_argument('-u', action="store", dest='username', help = 'GASPAR username', required = True)
 parser.add_argument('-p', action="store", dest='password', help='GASPAR password', required = True)
-parser.add_argument('-d', action="store", dest='startDate',type=inputDateFormat, default='20.09.2012', help = 'Download calendar from this date, format: dd.mm.yyyy (default: %(default)s)')
+parser.add_argument('-d', action="store", dest='startDate',type=inputDateFormat, default='17.09.2012', help = 'Download calendar from this date, format: dd.mm.yyyy (default: %(default)s)')
 parser.add_argument('-w', action="store", dest='numWeeks',type=int, default=14, help = 'Number of weeks to download (default: %(default)s)')
 
 args = parser.parse_args()

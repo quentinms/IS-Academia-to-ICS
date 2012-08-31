@@ -1,5 +1,7 @@
 # IS-Academia to ICS
 
+###/!\ Deprecated. IS-Academia now has an Export to iCalendar button.
+
 Fetch data from IS-Academia and convert it in .ics for importation in calendar.
 
 ## Usage:
